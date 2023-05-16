@@ -1,12 +1,13 @@
 ﻿using Polynomial;
+using System.Text;
 
 #region variable defines
 string polynomial1, polynomial2, finalPolynomial;
 List<Monomial> monomials1 = new();
 List<Monomial> monomials2 = new();
 List<Monomial> finalMonomials = new();
-double degree = 0, coefficient = 0;
-char? arg = 'x';
+double degree, coefficient;
+char? arg;
 #endregion
 
 void GetPolynomials()
@@ -39,13 +40,21 @@ void GetPolynomials()
 bool? BreakIntoMonomials()
 {
     int hatIndex = 0, spaceIndex = -1, argIndex = -1;
-
+    arg = null;
     foreach (char c in polynomial1) // Set the name of variable
         if (c != '^' && (c > '9' || c < 0) && c != ' ' && c != '.')
         {
             arg = c;
             break;
         }
+    if (arg == null)
+        foreach (char c in polynomial2) // Set the name of variable
+            if (c != '^' && (c > '9' || c < 0) && c != ' ' && c != '.')
+            {
+                arg = c;
+                break;
+            }
+    arg ??= 'x';
     while (true) // Fix one-degree isues in polynomial1
     {
         argIndex = polynomial1.IndexOf(Convert.ToChar(arg), argIndex + 1);
@@ -53,7 +62,6 @@ bool? BreakIntoMonomials()
         if (polynomial1[argIndex + 1] != '^')
             polynomial1 = polynomial1.Insert(argIndex + 1, "^1");
     }
-    argIndex = -1;
     while (true) // Fix one-degree isues polynomial2
     {
         argIndex = polynomial2.IndexOf(Convert.ToChar(arg), argIndex + 1);
@@ -121,8 +129,8 @@ bool? BreakIntoMonomials()
 
 void SortPolynomials()
 {
-    QuickSortPoly(monomials1, 0, monomials1.Count - 1);
-    QuickSortPoly(monomials2, 0, monomials2.Count - 1);
+    if (monomials1.Count > 1) QuickSortPoly(monomials1, 0, monomials1.Count - 1);
+    if (monomials2.Count > 1) QuickSortPoly(monomials2, 0, monomials2.Count - 1);
     for (int i = 0; i < monomials1.Count - 1; i++)
     {
         if (monomials1[i].Degree == monomials1[i + 1].Degree)
@@ -215,6 +223,8 @@ void Add()
                 coefficient = a.Coefficient + b.Coefficient;
             }
         }
+        degree = Math.Round(degree, 5, MidpointRounding.ToEven);
+        coefficient = Math.Round(coefficient, 5, MidpointRounding.ToEven);
         finalMonomials.Add(new Monomial(degree, coefficient));
     }
 }
@@ -237,11 +247,16 @@ void WriteFinalPolynomial()
         if (coefficient == 1)
         {
             if (degree == 0)
-                finalPolynomial += $" ";
+                finalPolynomial += $"1 ";
             else if (degree == 1)
                 finalPolynomial += $"{arg} ";
             else
-                finalPolynomial += $"{arg}^{degree} ";
+                finalPolynomial += degree switch
+                {
+                    2 => $"{arg}\xB2 ",
+                    3 => $"{arg}\xB3 ",
+                    _ => $"{arg}^{degree} "
+                };
         }
         else
         {
@@ -250,9 +265,21 @@ void WriteFinalPolynomial()
             else if (degree == 1)
                 finalPolynomial += $"{coefficient}{arg} ";
             else
-                finalPolynomial += $"{coefficient}{arg}^{degree} ";
+                finalPolynomial += degree switch
+                {
+                    2 => $"{coefficient}{arg}\xB2 ",
+                    3 => $"{coefficient}{arg}\xB3 ",
+                    4 => $"{coefficient}{arg}\xB4 ",
+                    5 => $"{coefficient}{arg}\xB5 ",
+                    6 => $"{coefficient}{arg}\xB6 ",
+                    7 => $"{coefficient}{arg}\xB7 ",
+                    8 => $"{coefficient}{arg}\xB8 ",
+                    9 => $"{coefficient}{arg}\xB9 ",
+                    _ => $"{coefficient}{arg}^{degree} "
+                };
         }
     }
+    if (polynomial1 != " " && finalPolynomial.Length == 13) finalPolynomial += "0";
     Console.WriteLine(finalPolynomial);
 }
 
@@ -275,10 +302,12 @@ void ClaculateByValue()
             Console.SetCursorPosition(6, Console.CursorTop - 1);
         }
     Console.CursorVisible = false;
+    Console.SetCursorPosition(argValue.ToString().Length + 6, Console.CursorTop - 1);
+    Console.Write($"  --> f({argValue}) = ");
+    if (finalPolynomial.Length == 13) return;
     foreach (var monomial in finalMonomials) // Calculatin the sum of all monomials based on the given vlaue of x
         answer += monomial.Coefficient * Math.Pow(argValue, monomial.Degree);
-    Console.SetCursorPosition(argValue.ToString().Length + 6, Console.CursorTop - 1);
-    Console.Write($" --> f({argValue}) = " + answer); // Writing the value of f(x)
+    Console.Write(answer); // Writing the value of f(x)
 }
 
 bool WhatToDo()
@@ -310,6 +339,8 @@ bool WhatToDo()
 
 while (true)
 {
+    Console.OutputEncoding = Encoding.Unicode;
+    Console.Title = "Polynomial";
     GetPolynomials();
     try // Check for any possible invalid inputs
     {
@@ -328,8 +359,7 @@ while (true)
     }
     catch
     {
-        throw;
-        //Console.Write("  Invalid input! Please enter valid polynomials!");
+        Console.Write("  Invalid input! Please enter valid polynomials!");
     }
     if (!WhatToDo()) // Continue receiving inputs or end the program
         return;
