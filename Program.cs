@@ -6,7 +6,7 @@ List<Monomial> monomials1 = new();
 List<Monomial> monomials2 = new();
 List<Monomial> finalMonomials = new();
 double degree = 0, coefficient = 0;
-char? arg = null;
+char? arg = 'x';
 #endregion
 
 void GetPolynomials()
@@ -63,6 +63,7 @@ bool? BreakIntoMonomials()
     }
     while (true) // " 2x^3 "    // Breaking polynomial1 into monomials and storing them in a list
     {
+        if (polynomial1 == " ") break; // Do nothing if the polynomial is empty
         if (spaceIndex == polynomial1.Length - 1) break; // All monomials are stored
         hatIndex = polynomial1.IndexOf("^", hatIndex + 1); // = 3
         if (hatIndex == -1 || polynomial1.Substring(spaceIndex + 1, hatIndex - spaceIndex).IndexOf(" ") != -1) // The monomial is zero-degree
@@ -90,6 +91,7 @@ bool? BreakIntoMonomials()
     spaceIndex = -1;
     while (true) // " 52x^10 "    // Breaking polynomial2 into monomials and storing them in a list
     {
+        if (polynomial2 == " ") break; // Do nothing if the polynomial is empty
         if (spaceIndex == polynomial2.Length - 1) break; // All monomials are stored
         hatIndex = polynomial2.IndexOf("^", hatIndex + 1); // = 4
         if (hatIndex == -1 || polynomial2.Substring(spaceIndex + 1, hatIndex - spaceIndex).IndexOf(" ") != -1) // The monomial is zero-degree
@@ -227,7 +229,7 @@ void WriteFinalPolynomial()
         coefficient = monomial.Coefficient;
         if (coefficient == 0) // Writing the monomial
             continue;
-        else if (coefficient > 0 && Console.CursorLeft != 13)
+        else if (coefficient > 0 && finalPolynomial.Length != 13)
             finalPolynomial += "+ ";
         else if (coefficient < 0)
             finalPolynomial += "- ";
@@ -245,6 +247,8 @@ void WriteFinalPolynomial()
         {
             if (degree == 0)
                 finalPolynomial += $"{coefficient} ";
+            else if (degree == 1)
+                finalPolynomial += $"{coefficient}{arg} ";
             else
                 finalPolynomial += $"{coefficient}{arg}^{degree} ";
         }
@@ -264,7 +268,7 @@ void ClaculateByValue()
             argValue = Convert.ToDouble(Console.ReadLine());
             break;
         }
-        catch (Exception)
+        catch
         {
             Console.SetCursorPosition(5, Console.CursorTop - 1);
             Console.Write(new string(' ', Console.WindowWidth));
@@ -273,7 +277,7 @@ void ClaculateByValue()
     Console.CursorVisible = false;
     foreach (var monomial in finalMonomials) // Calculatin the sum of all monomials based on the given vlaue of x
         answer += monomial.Coefficient * Math.Pow(argValue, monomial.Degree);
-    Console.SetCursorPosition(argValue.ToString().Length + 5, Console.CursorTop - 1);
+    Console.SetCursorPosition(argValue.ToString().Length + 6, Console.CursorTop - 1);
     Console.Write($" --> f({argValue}) = " + answer); // Writing the value of f(x)
 }
 
