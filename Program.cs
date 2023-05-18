@@ -231,15 +231,16 @@ void Add()
 
 void WriteFinalPolynomial()
 {
+    bool isPretty = true;
     Console.ForegroundColor = ConsoleColor.Blue;
     finalPolynomial = $"  --> f({arg}) = ";
     foreach (var monomial in finalMonomials)
     {
         degree = monomial.Degree;
         coefficient = monomial.Coefficient;
-        if (coefficient == 0) // Writing the monomial
+        if (coefficient == 0) // Write nothing for zero
             continue;
-        else if (coefficient > 0 && finalPolynomial.Length != 13)
+        else if (coefficient > 0 && finalPolynomial.Length != 13) // Check the sign
             finalPolynomial += "+ ";
         else if (coefficient < 0)
             finalPolynomial += "- ";
@@ -251,13 +252,23 @@ void WriteFinalPolynomial()
             else if (degree == 1)
                 finalPolynomial += $"{arg} ";
             else
-                finalPolynomial += degree switch
+            {
+                if (degree > 3)
                 {
-                    2 => $"{arg}\xB2 ",
-                    3 => $"{arg}\xB3 ",
-                    _ => $"{arg}^{degree} "
-                };
-        }
+                    isPretty = false;
+                    finalPolynomial += $"{arg}^{degree} ";
+                }
+                else if (isPretty)
+                    finalPolynomial += degree switch
+                    {
+                        2 => $"{arg}\xB2 ",
+                        3 => $"{arg}\xB3 ",
+                        _ => $"{arg}^{degree} "
+                    };
+                else
+                    finalPolynomial += $"{arg}^{degree} ";
+            }
+        } // Writing one-coefficient monomial
         else
         {
             if (degree == 0)
@@ -265,19 +276,29 @@ void WriteFinalPolynomial()
             else if (degree == 1)
                 finalPolynomial += $"{coefficient}{arg} ";
             else
-                finalPolynomial += degree switch
+            {
+                if (degree > 3)
                 {
-                    2 => $"{coefficient}{arg}\xB2 ",
-                    3 => $"{coefficient}{arg}\xB3 ",
-                    4 => $"{coefficient}{arg}\xB4 ",
-                    5 => $"{coefficient}{arg}\xB5 ",
-                    6 => $"{coefficient}{arg}\xB6 ",
-                    7 => $"{coefficient}{arg}\xB7 ",
-                    8 => $"{coefficient}{arg}\xB8 ",
-                    9 => $"{coefficient}{arg}\xB9 ",
-                    _ => $"{coefficient}{arg}^{degree} "
-                };
-        }
+                    isPretty = false;
+                    finalPolynomial += $"{coefficient}{arg}^{degree} ";
+                }
+                else if (isPretty)
+                    finalPolynomial += degree switch
+                    {
+                        2 => $"{coefficient}{arg}\xB2 ",
+                        3 => $"{coefficient}{arg}\xB3 ",
+                        4 => $"{coefficient}{arg}^{degree} ",
+                        5 => $"{coefficient}{arg}^{degree} ",
+                        6 => $"{coefficient}{arg}^{degree} ",
+                        7 => $"{coefficient}{arg}^{degree} ",
+                        8 => $"{coefficient}{arg}^{degree} ",
+                        9 => $"{coefficient}{arg}^{degree} ",
+                        _ => $"{coefficient}{arg}^{degree} "
+                    };
+                else
+                    finalPolynomial += $"{coefficient}{arg}^{degree} ";
+            }
+        }// Writing not-one-coefficient monomial
     }
     if (polynomial1 != " " && finalPolynomial.Length == 13) finalPolynomial += "0";
     Console.WriteLine(finalPolynomial);
@@ -289,7 +310,7 @@ void ClaculateByValue()
     double argValue, answer = 0;
     Console.CursorVisible = true;
     Console.Write($"  {arg} = ");
-    while (true) // Getting value for x until its valid
+    while (true) // Get value of x until its valid
         try
         {
             argValue = Convert.ToDouble(Console.ReadLine());
@@ -303,42 +324,41 @@ void ClaculateByValue()
         }
     Console.CursorVisible = false;
     Console.SetCursorPosition(argValue.ToString().Length + 6, Console.CursorTop - 1);
-    Console.Write($"  --> f({argValue}) = ");
+    Console.Write($" --> f({argValue}) = ");
     if (finalPolynomial.Length == 13) return;
-    foreach (var monomial in finalMonomials) // Calculatin the sum of all monomials based on the given vlaue of x
+    foreach (var monomial in finalMonomials) // Calculate the sum of all monomials based on the given vlaue of x
         answer += monomial.Coefficient * Math.Pow(argValue, monomial.Degree);
-    Console.Write(answer); // Writing the value of f(x)
+    Console.Write(answer); // Write the value of f(x)
 }
 
-bool WhatToDo()
+Enums.WhatToDo WhatToDo()
 {
     Console.ForegroundColor = ConsoleColor.Green;
-    Console.Write("\n\n  R: restart   |   ESC: exit\n");
+    Console.Write("\n\n  R: restart   |   ESC: exit");
     while (true)
     {
-        bool flag = false;
-        var key = Console.ReadKey();
-        switch (key.Key)
+        switch (Console.ReadKey(true).Key)
         {
             case ConsoleKey.R:
                 Console.Clear();
-                flag = true;
-                break;
+                return Enums.WhatToDo.restart;
             case ConsoleKey.Escape:
-                return false;
+                return Enums.WhatToDo.exit;
             default:
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write(' ');
-                Console.SetCursorPosition(0, Console.CursorTop);
                 break;
         }
-        if (flag) break;
     }
-    return true;
+}
+
+void CancelHandler(object? sender = null, ConsoleCancelEventArgs? args = null)
+{
+    Console.ResetColor();
+    Console.Write("\n");
 }
 
 while (true)
 {
+    Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelHandler);
     Console.OutputEncoding = Encoding.Unicode;
     Console.Title = "Polynomial";
     GetPolynomials();
@@ -346,7 +366,7 @@ while (true)
     {
         bool? state = BreakIntoMonomials();
         if (state == false)
-            Console.Write("  Invalid input! Please enter single-variable polynomials!");
+            Console.Write("  Invalid input! Please enter single-variable polynomial!");
         else if (state == null)
             Console.Write("  Variables are not the same!");
         else
@@ -359,8 +379,11 @@ while (true)
     }
     catch
     {
-        Console.Write("  Invalid input! Please enter valid polynomials!");
+        Console.Write("  Invalid inputs! Please enter valid polynomials!");
     }
-    if (!WhatToDo()) // Continue receiving inputs or end the program
+    if (WhatToDo() == Enums.WhatToDo.exit) // Continue receiving inputs if 'restart', and end the program if 'exit'
+    {
+        CancelHandler();
         return;
+    }
 }
